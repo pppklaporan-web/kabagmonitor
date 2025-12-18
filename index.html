@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Pimpinan — PPPK</title>
+
+<!-- ChartJS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+/* === CSS kamu tetap sama — saya tidak ubah satupun === */
+body { margin:0; font-family:"Segoe UI",Arial,sans-serif; background:#0d1117; color:#e5e7eb; }
+.layout { display:flex; height:100vh; overflow:hidden; }
+.sidebar { width:250px; background:#11161f; padding:22px; display:flex; flex-direction:column; transition:.3s; z-index:1002;}
+.logo { font-size:22px; font-weight:bold; margin-bottom:25px; color:#fff; }
+.menu { padding:12px 16px; border-radius:10px; text-decoration:none; color:#cbd5e1; margin-bottom:10px; transition:.25s;}
+.menu:hover,.menu.active { background:#1e293b; color:white; }
+.content { flex:1; padding:22px; overflow-y:auto; }
+.card { background:#161b22; padding:18px; margin-bottom:20px; border-radius:14px; border:1px solid rgba(255,255,255,0.05); }
+
+.summary-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; }
+.summary-box { background:#1b212c; padding:16px; border-radius:12px; text-align:center; }
+
+.table-wrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; }
+thead td { font-weight:bold; padding:10px; background:#1e293b; }
+tr { background:#1b212c; }
+td { padding:12px; border-bottom:1px solid rgba(255,255,255,0.05); }
+tr:hover { background:#242c39; }
+
+.row-menunggu{border-left:6px solid #facc15;}
+.row-proses{border-left:6px solid #3b82f6;}
+.row-selesai{border-left:6px solid #22c55e;}
+
+#laporanTable td:nth-child(1),
+#laporanTable td:nth-child(6),
+#laporanTable th:nth-child(1),
+#laporanTable th:nth-child(6) { display:none; }
+
+.star { cursor:pointer; font-size:22px; color:#666; }
+.star.selected{ color:gold; }
+
+.modal { position:fixed; inset:0; background:rgba(0,0,0,0.65); display:flex; align-items:center; justify-content:center; z-index:999;}
+.modal.hidden { display:none; }
+
+.modal-content { background:#1f2733; padding:20px; border-radius:12px; width:90%; max-width:420px; }
+
+.fab { position:fixed; bottom:25px; right:25px; width:60px; height:60px; background:#2563eb; color:white;
+       font-size:32px; border-radius:50%; display:flex; justify-content:center; align-items:center; text-decoration:none;}
+
+.menu-toggle { display:none; position:fixed; top:15px; left:15px; font-size:26px; padding:8px 12px;
+               border-radius:8px; background:#1e293b; color:white; border:none; z-index:1003;}
+
+.sidebar-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.55); display:none; z-index:1000; }
+.sidebar-overlay.active { display:block;}
+
+@media (max-width:900px){
+  .sidebar{ position:fixed; height:100%; left:0; top:0; transform:translateX(-100%);}
+  .sidebar.open { transform:translateX(0);}
+  .menu-toggle{ display:block;}
+  .layout{ padding-left:0;}
+  .content{ padding-top:70px;}
+}
+</style>
+
+
+</head>
+<body>
+
+<button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="logo">PPPK</div>
+    
+    <a class="menu active" onclick="loadPage('pimpinan-content.html')">Monitoring Kendala</a>
+ <!--   <a class="menu" onclick="loadPage('dashboard-content.html')">Dashboard Public</a>-->
+ <!--   <a class="menu" onclick="loadPage('petugas-content.html')">Dashboard Petugas</a> -->
+    <a class="menu" onclick="loadPage('index-content.html')">Lapor Kendala</a>
+  </aside>
+
+  <!-- IFRAME VIEWER FIX -->
+  <div class="content">
+    <iframe id="viewFrame"
+            src="pimpinan-content.html"
+            style="width:100%; height:100vh; border:none; background:#0d1117;">
+    </iframe>
+  </div>
+
+</div>
+
+
+<script>
+function toggleSidebar() {
+  const bar = document.getElementById("sidebar");
+  const overlay = document.getElementById("sidebarOverlay");
+  bar.classList.toggle("open");
+  overlay.classList.toggle("active");
+
+  overlay.onclick = () => {
+    bar.classList.remove("open");
+    overlay.classList.remove("active");
+  };
+}
+
+/* LOADER IFRAME */
+function loadPage(file) {
+  document.getElementById("viewFrame").src = file;
+
+  // Tutup sidebar otomatis di HP
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("sidebarOverlay").classList.remove("active");
+}
+</script>
+
+</body>
+</html>
+
