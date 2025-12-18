@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Pimpinan — PPPK</title>
+
+<!-- ChartJS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+/* =============================
+   DARK UI GLOBAL
+============================= */
+body {
+  margin: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: #0d1117;
+  color: #e5e7eb;
+}
+
+.layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* =============================
+   SIDEBAR
+============================= */
+.sidebar {
+  width: 250px;
+  background: #11161f;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  transition: .3s ease;
+  z-index: 1002;
+}
+
+.logo {
+  font-size: 22px;
+  font-weight: bold;
+  margin-bottom: 25px;
+  color: #fff;
+}
+
+.menu {
+  padding: 12px 16px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: #cbd5e1;
+  margin-bottom: 10px;
+  transition: .25s;
+}
+
+.menu:hover,
+.menu.active {
+  background: #1e293b;
+  color: white;
+}
+
+/* =============================
+   CONTENT
+============================= */
+.content {
+  flex: 1;
+  padding: 22px;
+  overflow-y: auto;
+}
+
+.card {
+  background: #161b22;
+  padding: 18px;
+  margin-bottom: 20px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+/* SUMMARY BOX */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(180px,1fr));
+  gap: 16px;
+}
+
+.summary-box {
+  background: #1b212c;
+  padding: 16px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+/* TABLE */
+.table-wrap { overflow-x: auto; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead td {
+  font-weight: bold;
+  padding: 10px;
+  background: #1e293b;
+}
+
+tr {
+  background: #1b212c;
+}
+
+td {
+  padding: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+tr:hover { background: #242c39; }
+
+/* STATUS COLOR */
+.row-menunggu { border-left: 6px solid #facc15; }
+.row-proses   { border-left: 6px solid #3b82f6; }
+.row-selesai  { border-left: 6px solid #22c55e; }
+
+/* HIDDEN COLUMNS */
+#laporanTable td:nth-child(1),
+#laporanTable td:nth-child(6),
+#laporanTable th:nth-child(1),
+#laporanTable th:nth-child(6) {
+  display: none;
+}
+
+/* RATING */
+.star {
+  cursor: pointer;
+  font-size: 22px;
+  color: #666;
+}
+.star.selected {
+  color: gold;
+}
+
+/* MODAL */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+.modal.hidden { display: none; }
+
+.modal-content {
+  background: #1f2733;
+  padding: 20px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 420px;
+}
+
+/* Floating Button */
+.fab {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  width: 60px;
+  height: 60px;
+  background: #2563eb;
+  color: white;
+  font-size: 32px;
+  border-radius: 50%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  text-decoration:none;
+}
+
+/* Hamburger Button */
+.menu-toggle {
+  display: none;
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  font-size: 26px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #1e293b;
+  color: white;
+  border: none;
+  z-index: 1003;
+}
+
+/* Overlay */
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: none;
+  z-index: 1000;
+}
+
+.sidebar-overlay.active {
+  display: block;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+
+  .sidebar {
+    position: fixed;
+    height: 100%;
+    left: 0;
+    top: 0;
+    transform: translateX(-100%);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .menu-toggle {
+    display: block;
+  }
+
+  .layout {
+    padding-left: 0;
+  }
+
+  .content {
+    padding-top: 70px;
+  }
+}
+
+.chart-box {
+  height: 300px;
+}
+#chartStatus {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+/* FIX: Batas tinggi chart agar tidak melar */
+.chart-box {
+  position: relative;
+  height: 280px !important;
+  max-height: 280px !important;
+  padding: 10px 0;
+}
+
+/* FIX: Canvas chart supaya tidak auto-expand */
+#chartStatus {
+  width: 100% !important;
+  height: 100% !important;
+  max-height: 280px !important;
+  display: block;
+}
+
+/* FIX: Card agar tidak melar secara vertikal */
+.card {
+  background: #161b22;
+  padding: 18px;
+  margin-bottom: 20px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.05);
+  max-width: 100%;
+  overflow: hidden; /* ← sangat penting */
+}
+
+/* FIX: Tabel agar tidak mendorong chart ke bawah */
+.table-wrap {
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-height: 450px;
+}
+
+.rating span {
+  display: inline-block;
+  padding: 6px;
+  cursor: pointer;
+  font-size: 28px;
+  color: #666;
+  transition: .15s ease;
+}
+
+.rating span:hover {
+  transform: scale(1.25);
+}
+
+.rating span.active {
+  color: gold !important;
+}
+
+</style>
+
+</head>
+<body>
+
+<!-- CONTENT -->
+  <main class="content">
+
+    <div class="summary-grid">
+      <div class="summary-box">
+        <h2 id="sumTotal">0</h2>
+        <p>Total Laporan</p>
+      </div>
+      <div class="summary-box">
+        <h2 id="sumProcess">0</h2>
+        <p>Dalam Proses</p>
+      </div>
+      <div class="summary-box">
+        <h2 id="sumDone">0</h2>
+        <p>Selesai</p>
+      </div>
+    </div>
+
+    <div class="card">
+  <h3>Status Laporan</h3>
+
+  <div class="chart-box">
+    <canvas id="chartStatus"></canvas>
+  </div>
+</div>
+
+
+
+    <div class="card table-wrap">
+      <table id="laporanTable">
+        <thead>
+          <tr>
+            <td>ID</td>
+            <td>Tanggal</td>
+            <td>Nama</td>
+            <td>Ruangan</td>
+            <td>Keterangan</td>
+            <td>Foto</td>
+            <td>Status</td>
+            <td>Petugas</td>
+            <td>Catatan</td>
+            <td>Rating</td>
+            <td>Edit</td>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+  </main>
+</div>
+
+<!-- Floating Button -->
+<a href="index.html" class="fab">＋</a>
+
+<!-- MODAL -->
+<div id="modalPimpinan" class="modal hidden">
+  <div class="modal-content">
+    <h3>Edit Laporan</h3>
+
+    <input type="hidden" id="editId">
+
+    <label>Petugas:</label>
+    <input id="editPetugasPimpinan" style="width:100%;padding:8px;border-radius:8px;margin-bottom:10px;">
+
+    <label>Rating:</label>
+    <div class="rating" style="margin-bottom:10px; font-size:26px;">
+      <span data-value="1">★</span>
+      <span data-value="2">★</span>
+      <span data-value="3">★</span>
+      <span data-value="4">★</span>
+      <span data-value="5">★</span>
+    </div>
+
+    <button onclick="saveEditPimpinan()" style="width:100%;padding:12px;border-radius:8px;background:#2563eb;color:white;margin-top:10px;">Simpan</button>
+    <button onclick="closePimpinan()" style="width:100%;padding:8px;margin-top:8px;border-radius:8px;">Batal</button>
+  </div>
+</div>
+<!-- ========== SCRIPT START ========== -->
+
+<!-- RATING HANDLER (FINAL CLEAN VERSION) -->
+<script>
+function initRating() {
+  const stars = document.querySelectorAll(".rating span");
+  if (!stars.length) return;
+
+  stars.forEach(star => {
+    star.onclick = () => {
+      const selected = parseInt(star.dataset.value);
+
+      stars.forEach(s => {
+        s.style.color = (parseInt(s.dataset.value) <= selected) ? "gold" : "#555";
+      });
+
+      window.selectedRating = selected;
+    };
+  });
+}
+
+// Panggil ulang ketika modal pimpinan dibuka
+document.getElementById("modalPimpinan")?.addEventListener("click", initRating);
+</script>
+
+
+<!-- UI SCRIPT -->
+<script src="assets/js/dashboard-pimpinan-ui.js"></script>
+
+<script>
+function toggleSidebar() {
+  const bar = document.getElementById("sidebar");
+  const overlay = document.getElementById("sidebarOverlay");
+
+  bar.classList.toggle("open");
+  overlay.classList.toggle("active");
+
+  overlay.onclick = () => {
+    bar.classList.remove("open");
+    overlay.classList.remove("active");
+  };
+}
+</script>
+
+
+<!-- CHART.JS FINAL FIX -->
+<script>
+Chart.defaults.maintainAspectRatio = false;
+Chart.defaults.responsive = true;
+
+function updateChart(totalSelesai, totalProses, totalMenunggu) {
+  const canvas = document.getElementById("chartStatus");
+  if (!canvas) return;
+
+  const ctx = canvas.getContext("2d");
+
+  if (window.statusChart) {
+    window.statusChart.destroy();
+  }
+
+  window.statusChart = new Chart(ctx, {
+    type: "doughnut",
+    data: {
+      labels: ["Selesai", "Proses", "Menunggu"],
+      datasets: [{
+        data: [totalSelesai, totalProses, totalMenunggu],
+        backgroundColor: ["#22c55e", "#3b82f6", "#FFA500"],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      cutout: "60%",
+      plugins: {
+        legend: {
+          position: "bottom",
+          labels: { color: "#fff" }
+        }
+      }
+    }
+  });
+}
+
+function refreshChartFromTable() {
+  const rows = document.querySelectorAll("#laporanTable tbody tr");
+  let selesai = 0, proses = 0, menunggu = 0;
+
+  rows.forEach(row => {
+    if (row.children.length < 7) return;
+    const status = row.children[6].innerText.trim().toLowerCase();
+
+    if (status.includes("selesai")) selesai++;
+    else if (status.includes("proses")) proses++;
+    else menunggu++;
+  });
+
+  const sumTotalEl = document.getElementById("sumTotal");
+  const sumProcessEl = document.getElementById("sumProcess");
+  const sumDoneEl = document.getElementById("sumDone");
+
+  if (sumTotalEl) sumTotalEl.innerText = selesai + proses + menunggu;
+  if (sumProcessEl) sumProcessEl.innerText = proses + menunggu;
+  if (sumDoneEl) sumDoneEl.innerText = selesai;
+
+  updateChart(selesai, proses, menunggu);
+}
+
+function debounce(fn, wait = 120) {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn.apply(this, args), wait);
+  };
+}
+
+(function attachObserver() {
+  const tbody = document.querySelector("#laporanTable tbody");
+  if (!tbody) return setTimeout(attachObserver, 300);
+
+  refreshChartFromTable();
+
+  const observer = new MutationObserver(debounce(refreshChartFromTable, 100));
+  observer.observe(tbody, { childList: true, subtree: true, characterData: true });
+})();
+
+let _tries = 0;
+const _interval = setInterval(() => {
+  refreshChartFromTable();
+  _tries++;
+  if (_tries > 10 || window.statusChart) clearInterval(_interval);
+}, 700);
+</script>
+
+<!-- ========== SCRIPT END ========== -->
+
+
+</body>
+</html>
